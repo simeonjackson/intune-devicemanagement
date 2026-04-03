@@ -2,14 +2,16 @@
 <p>
 Building off the initial setup of user identities in Microsoft 365, this project focuses on securing the physical hardware those users interact with using Microsoft Intune.
 
-I wanted to smulate the automated provisioning and securing of a new corporate laptop. I did this by joining a virtual machine to Entra ID, configuring security compliance baselines, and deploying configuration profiles.
+I wanted to simulate the automated provisioning and securing of a new corporate laptop. I did this by joining a virtual machine to Entra ID, configuring security compliance baselines, and deploying configuration profiles.
+
+I also touched on application provisioning silently pushing third-party software (Firefox) onto a new corporate laptop.
 
 </p>
 
 <h2>Environments and Technologies Used</h2>
 
 * **Infrastructure:** Microsoft Intune Admin Center, Microsoft Entra Admin Center, Microsoft Azure (Windows 10 VM)
-* **Core Concepts:** Mobile Device Management (MDM), Entra ID Join, Device Compliance, Configuration Profiles, Silent BitLocker Encryption, Remote Troubleshooting (`dsregcmd`)
+* **Core Concepts:** Mobile Device Management (MDM), Entra ID Join, Device Compliance, Configuration Profiles, Silent BitLocker Encryption, Zero-Touch Deployment, Microsoft Store Repository Integration, Remote Troubleshooting (`dsregcmd`), Intune Management Extension
 
 
 <h2>The Setup</h2>
@@ -36,6 +38,10 @@ My goals were as follows:
 * Define Compliance Policies: Create a baseline that requires a password and BitLocker device encryption.
 
 * Deploy Security Features: Push a silent BitLocker encryption profile to automatically secure the drive and bring the device into compliance without user intervention.
+
+* Zero-Touch App Deployment: Push a required third-party application (Mozilla Firefox) silently to the device so it is ready for the user immediately.
+
+Below I will go through the configuration and deployment of each requireme
 
 Below I will go through the configuration and deployment of each requirement, verifying it works and explaining the objective behind the configuration.
 
@@ -89,14 +95,29 @@ Once assigned and synced, Intune silently triggered the virtual TPM on the VM an
 
 [Insert Screenshot: The Windows VM showing "BitLocker is On" alongside the updated "Compliant" status in the Intune portal]
 
+<h3>5. Silent Application Sourcing and Assignment</h3>
 
+With the device secured, I moved on to software provisioning. I navigated to the Microsoft Intune Admin Center > Apps > All apps and selected Add.
+
+Instead of manually uploading an MSI installation file, I utilized the Microsoft Store app (new) repository to pull the official Mozilla Firefox package. On the Assignments tab, I bypassed the "Available" group (which puts the app in the Company Portal for voluntary download) and added all users to the Required assignment group. This forces a silent background installation.
+
+[Insert Screenshot: The Intune App assignment page showing Google Chrome assigned as "Required" for All Users]
+
+
+<h3>6. Verifying the Zero-Touch Deployment</h3>
+
+Because the deployment was configured as "Required," the user does not see an installation wizard or a loading bar.
+
+To expedite the installation for the lab, I forced another manual sync on the Windows VM via Settings > Accounts > Access work or school. After a few minutes, Firefox successfully populated in the Windows Start Menu. I verified this success administratively by checking the Firefox app dashboard in the Intune portal, which reported a successful Device install status.
+
+[Insert Screenshot: A split screen showing Google Chrome in the VM's Start Menu, alongside the Intune portal showing a green checkmark for Device Install Status]
 
 <h2>Takeaways</h2>
 
 <p>
 Cloud identities and physical hardware go hand in hand and we will continue to rely on this connection even more. Intune is a vital tool for companies to manage endpoints remotely, enforce corporate security standards, and troubleshoot cloud-join connectivity issues.
 
-I learned the critical difference between Compliance Policies (which simply audit and report on a device's security state) and Configuration Profiles (which actually enforce changes and restrict user actions).
+I learned the critical difference between Compliance Policies (which simply audit and report on a device's security state) and Configuration Profiles (which actually enforce changes and restrict user actions). Using zero-touch deployment to automatically push required applications onto devices was cool to see happen in real-time and represents a huge time savings.
 
 I also learned how to use the `dsregcmd /status` command in the Windows Command Prompt to verify a device's Entra ID join state and MDM URL routing. Understanding how to force manual syncs on the client side, rather than waiting for Intune's default 8-hour check-in window, proved essential for testing and validating deployments efficiently.
 
